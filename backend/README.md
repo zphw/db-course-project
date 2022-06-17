@@ -3,6 +3,12 @@ CS 3083 Course Project
 
 CS 3083 course project backend server.
 
+## Database migration
+
+```shell
+mysql -u[user_name] -p [db_name] < migration/db.sql
+```
+
 ## Development Server
 
 ```shell
@@ -11,12 +17,6 @@ yarn dev
 ```
 
 ## Production Deployment
-
-### Database migration
-
-```shell
-mysql -u[user_name] -p [db_name] < migration/db.sql
-```
 
 ### Build and run
 ```shell
@@ -36,4 +36,4 @@ Then, run `yarn start` with correct environment variables to start the server.
 | DB_USERNAME | Required                              | Database username          |
 | DB_PASSWORD | Required                              | Database password          |
 | DB_DATABASE | Required                              | Database name              |
-| JWT_KEY     | s3cr3t (highly recommended to change) | JWT secret key             |
+| JWT_SECRET  | s3cr3t (highly recommended to change) | JWT secret key             |
