@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import { sign } from 'jsonwebtoken';
-import { z } from "zod";
+import { z } from 'zod';
 
 import connection from '../database';
 import env from '../utils/env';

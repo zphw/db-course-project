@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { z } from "zod";
+import { z } from 'zod';
 
 import { searchFlight, findFlight } from '../database/queries/flight';
 
@@ -20,7 +20,7 @@ router.post('/search', async (req, res) => {
         const data: any = {};
 
         data.to_flights = await searchFlight(search.data.dep, search.data.arr, search.data.date);
-        if(data.to_flights.length > 0 && search.data.back_date) {
+        if (data.to_flights.length > 0 && search.data.back_date) {
             data.back_flights = await searchFlight(search.data.arr, search.data.dep, search.data.back_date);
         }
 

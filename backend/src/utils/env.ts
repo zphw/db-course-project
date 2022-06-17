@@ -1,5 +1,5 @@
-import dotenv from "dotenv";
-import { cleanEnv, port, str } from 'envalid'
+import dotenv from 'dotenv';
+import { cleanEnv, port, str } from 'envalid';
 
 dotenv.config();
 

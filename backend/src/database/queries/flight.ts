@@ -11,7 +11,7 @@ const findAirportCode = async (airport: string) => {
     } else {
         return null;
     }
-}
+};
 
 export const searchFlight = async (dep: string, arr: string, date: string) => {
     const dep_airport = await findAirportCode(dep);
@@ -30,7 +30,7 @@ export const searchFlight = async (dep: string, arr: string, date: string) => {
     } else {
         return [];
     }
-}
+};
 
 export const findFlight = async (airline: string, flightNum: number, flightDate: string) => {
     try {
@@ -43,4 +43,4 @@ export const findFlight = async (airline: string, flightNum: number, flightDate:
     } catch (e) {
         return [];
     }
-}
+};
