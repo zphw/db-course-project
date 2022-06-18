@@ -93,7 +93,7 @@ router.post('/customer/register', async (req, res) => {
                         // expires: new Date().setMonth(new Date().getMonth() + 6)
                         // secure: true
                     });
-                    res.status(200).json({success: true, data: user.data, msg: ''});
+                    res.status(200).json({success: true, msg: ''});
                 } catch (e) {
                     res.status(200).json({success: false, msg: 'User input format is incorrect.'});
                 }
