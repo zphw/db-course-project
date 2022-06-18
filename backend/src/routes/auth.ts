@@ -16,7 +16,7 @@ router.post('/customer/login', async (req, res) => {
     const user = Customer.safeParse(req.body);
 
     if (!user.success) {
-        res.status(200).json({success: false, msg: 'User email format is incorrect.'});
+        res.status(200).json({success: false, msg: 'User input format is incorrect.'});
     } else {
         const [rows] = await connection.promise().query(
             'SELECT password FROM customer WHERE email = ?',
@@ -24,7 +24,7 @@ router.post('/customer/login', async (req, res) => {
         const result = JSON.parse(JSON.stringify(rows));
 
         if (result.length > 0 && bcrypt.compareSync(req.body.password, result[0].password)) {
-            res.cookie('token', sign({ email: user.data.email, role: 'customer' }, env.JWT_SECRET, {
+            res.cookie('token', sign({ user: user.data.email, role: 'customer' }, env.JWT_SECRET, {
                 expiresIn: '1h',
             }), {
                 httpOnly: true,
