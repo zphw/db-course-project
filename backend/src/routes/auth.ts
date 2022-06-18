@@ -1,3 +1,4 @@
+import AsyncLock from 'async-lock';
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import { sign } from 'jsonwebtoken';
@@ -5,6 +6,7 @@ import { z } from 'zod';
 
 import connection from '../database';
 import env from '../utils/env';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -35,6 +37,72 @@ router.post('/customer/login', async (req, res) => {
         } else {
             res.status(200).json({success: false, msg: 'Email or password incorrect.'});
         }
+    }
+});
+
+// eslint-disable-next-line require-await
+router.post('/customer/register', async (req, res) => {
+    const NewCustomer = z.object({
+        email: z.string().email().max(50),
+        name: z.string().max(50),
+        password: z.string().max(72),
+        address: z.string().max(50).optional().nullable().default(null),
+        address_2: z.string().max(50).optional().nullable().default(null),
+        city: z.string().max(30).optional().nullable().default(null),
+        state: z.string().max(2).optional().nullable().default(null),
+        passport_num: z.string().max(20).optional().nullable().default(null),
+        passport_exp: z.string().optional().nullable().default(null),
+        passport_country: z.string().max(20).optional().nullable().default(null),
+        birthday: z.string().optional().nullable().default(null),
+    });
+    const user = NewCustomer.safeParse(req.body);
+
+    if (!user.success) {
+        res.status(200).json({success: false, msg: 'User input format is incorrect.'});
+    } else {
+        const lock = new AsyncLock();
+
+        lock.acquire('reg', async () => {
+            const [rows] = await connection.promise().query(
+                'SELECT email FROM customer WHERE email = ?',
+                [user.data.email]);
+            const result = JSON.parse(JSON.stringify(rows));
+
+            if (result.length !== 0) {
+                res.status(200).json({success: false, msg: 'Email already exists.'});
+            } else {
+                user.data.password = bcrypt.hashSync(user.data.password, 10);
+
+                try {
+                    if (user.data.passport_exp) {
+                        user.data.passport_exp = new Date(user.data.passport_exp).toISOString().split('T')[0];
+                    }
+
+                    if (user.data.birthday) {
+                        user.data.birthday = new Date(user.data.birthday).toISOString().split('T')[0];
+                    }
+
+                    await connection.promise().query(
+                        'INSERT INTO customer SET ?',
+                        user.data);
+
+                    res.cookie('token', sign({ user: user.data.email, role: 'customer' }, env.JWT_SECRET, {
+                        expiresIn: '1h',
+                    }), {
+                        httpOnly: true,
+                        // expires: new Date().setMonth(new Date().getMonth() + 6)
+                        // secure: true
+                    });
+                    res.status(200).json({success: true, data: user.data, msg: ''});
+                } catch (e) {
+                    res.status(200).json({success: false, msg: 'User input format is incorrect.'});
+                }
+
+            }
+        }).catch((err) => {
+            logger.error(err);
+            res.status(500).json({success: false, msg: 'Registration Error'});
+        });
     }
 });
 
