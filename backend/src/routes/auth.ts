@@ -10,6 +10,8 @@ import logger from '../utils/logger';
 
 const router = Router();
 
+const lock = new AsyncLock();
+
 router.post('/customer/login', async (req, res) => {
     const Customer = z.object({
         email: z.string().email(),
@@ -60,9 +62,7 @@ router.post('/customer/register', async (req, res) => {
     if (!user.success) {
         res.status(200).json({success: false, msg: 'User input format is incorrect.'});
     } else {
-        const lock = new AsyncLock();
-
-        lock.acquire('reg', async () => {
+        lock.acquire('customerReg', async () => {
             const [rows] = await connection.promise().query(
                 'SELECT email FROM customer WHERE email = ?',
                 [user.data.email]);
