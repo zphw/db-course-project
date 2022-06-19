@@ -13,13 +13,13 @@ const authCustomer = (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = verify(token, env.JWT_SECRET) as { role: string, user: string };
         if (user.role !== 'customer') {
-            return res.status(401).send({success: false, msg: 'Permission denied.'});
+            return res.status(403).send({success: false, msg: 'Permission denied.'});
         } else {
             req.user = user.user;
         }
     } catch (err) {
         res.clearCookie('token');
-        return res.status(401).send({success: false, msg: 'Invalid Token.'});
+        return res.status(401).send({success: false, msg: 'Token invalid or expired.'});
     }
     return next();
 };

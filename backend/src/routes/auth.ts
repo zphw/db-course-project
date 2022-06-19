@@ -52,7 +52,7 @@ router.post('/customer/register', async (req, res) => {
         address: z.string().max(50).optional().nullable().default(null),
         address_2: z.string().max(50).optional().nullable().default(null),
         city: z.string().max(30).optional().nullable().default(null),
-        state: z.string().max(2).optional().nullable().default(null),
+        state: z.string().length(2).optional().nullable().default(null),
         passport_num: z.string().max(20).optional().nullable().default(null),
         passport_exp: z.preprocess(toDateString, z.string().optional().nullable().default(null)),
         passport_country: z.string().max(20).optional().nullable().default(null),
@@ -93,6 +93,10 @@ router.post('/customer/register', async (req, res) => {
             res.status(500).json({success: false, msg: 'Registration Error'});
         });
     }
+});
+
+router.post('/logout', (req, res) => {
+    res.clearCookie('token').status(200).json({success:true, msg:''});
 });
 
 export default router;
