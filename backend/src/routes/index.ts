@@ -32,7 +32,7 @@ router.post('/search', async (req, res) => {
 router.post('/flight', async (req, res) => {
     const Flight = z.object({
         airline: z.string(),
-        flight_num: z.number(),
+        flight_num: z.number().int(),
         date: z.preprocess(toDateString, z.string()),
     });
 
