@@ -95,7 +95,7 @@ router.post('/customer/register', async (req, res) => {
     }
 });
 
-router.post('/logout', (req, res) => {
+router.get('/logout', (req, res) => {
     res.clearCookie('token').status(200).json({success:true, msg:''});
 });
 
