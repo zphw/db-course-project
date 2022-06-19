@@ -7,6 +7,7 @@ import { z } from 'zod';
 import connection from '../database';
 import env from '../utils/env';
 import logger from '../utils/logger';
+import { toDateString } from "../utils/zod";
 
 const router = Router();
 
@@ -53,9 +54,9 @@ router.post('/customer/register', async (req, res) => {
         city: z.string().max(30).optional().nullable().default(null),
         state: z.string().max(2).optional().nullable().default(null),
         passport_num: z.string().max(20).optional().nullable().default(null),
-        passport_exp: z.string().optional().nullable().default(null),
+        passport_exp: z.preprocess(toDateString, z.string().optional().nullable().default(null)),
         passport_country: z.string().max(20).optional().nullable().default(null),
-        birthday: z.string().optional().nullable().default(null),
+        birthday: z.preprocess(toDateString, z.string().optional().nullable().default(null)),
     });
     const user = NewCustomer.safeParse(req.body);
 
@@ -73,30 +74,18 @@ router.post('/customer/register', async (req, res) => {
             } else {
                 user.data.password = bcrypt.hashSync(user.data.password, 10);
 
-                try {
-                    if (user.data.passport_exp) {
-                        user.data.passport_exp = new Date(user.data.passport_exp).toISOString().split('T')[0];
-                    }
+                await connection.promise().query(
+                    'INSERT INTO customer SET ?',
+                    user.data);
 
-                    if (user.data.birthday) {
-                        user.data.birthday = new Date(user.data.birthday).toISOString().split('T')[0];
-                    }
-
-                    await connection.promise().query(
-                        'INSERT INTO customer SET ?',
-                        user.data);
-
-                    res.cookie('token', sign({ user: user.data.email, role: 'customer' }, env.JWT_SECRET, {
-                        expiresIn: '1h',
-                    }), {
-                        httpOnly: true,
-                        // expires: new Date().setMonth(new Date().getMonth() + 6)
-                        // secure: true
-                    });
-                    res.status(200).json({success: true, msg: ''});
-                } catch (e) {
-                    res.status(200).json({success: false, msg: 'User input format is incorrect.'});
-                }
+                res.cookie('token', sign({ user: user.data.email, role: 'customer' }, env.JWT_SECRET, {
+                    expiresIn: '1h',
+                }), {
+                    httpOnly: true,
+                    // expires: new Date().setMonth(new Date().getMonth() + 6)
+                    // secure: true
+                });
+                res.status(200).json({success: true, msg: ''});
 
             }
         }).catch((err) => {

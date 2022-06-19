@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { searchFlight, findFlight } from '../database/queries/flight';
+import { toDateString } from '../utils/zod';
 
 const router = Router();
 
@@ -9,8 +10,8 @@ router.post('/search', async (req, res) => {
     const Flight = z.object({
         dep: z.string(),
         arr: z.string(),
-        date: z.string(),
-        back_date: z.string().optional(),
+        date: z.preprocess(toDateString, z.string()),
+        back_date: z.preprocess(toDateString, z.string().optional()),
     });
     const search = Flight.safeParse(req.body);
 
@@ -32,7 +33,7 @@ router.post('/flight', async (req, res) => {
     const Flight = z.object({
         airline: z.string(),
         flight_num: z.number(),
-        date: z.string()
+        date: z.preprocess(toDateString, z.string()),
     });
 
     const flight = Flight.safeParse(req.body);
