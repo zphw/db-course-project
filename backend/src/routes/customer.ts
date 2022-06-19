@@ -18,6 +18,53 @@ router.get('/flights', authCustomer, async (req, res) => {
     res.status(200).send({success: true, data: await customerFlights(email), msg: ''});
 });
 
+// TODO: test this route
+// eslint-disable-next-line require-await
+router.post('/cancel_flight', authCustomer, async (req, res) => {
+    const Ticket = z.object({
+        ticket_id: z.number().int(),
+    });
+
+    const ticket = Ticket.safeParse(req.body);
+    const email = req.user as string;
+
+    if (!ticket.success) {
+        res.status(200).json({success: false, msg: 'User input format is incorrect.'});
+    } else {
+        lock.acquire(`customerCancelTicket`, async () => {
+            const [rows] = await connection.promise().query(
+                'SELECT airline_name, flight_num, dep_datetime FROM ticket WHERE id = ? AND email = ?',
+                [ticket.data.ticket_id, email]);
+            const ticketResult = JSON.parse(JSON.stringify(rows));
+
+            if (ticketResult.length === 0) {
+                res.status(200).json({success: false, msg: "You cannot cancel this ticket."});
+            } else {
+                if (new Date(ticketResult[0].dep_datetime).getTime() - new Date().getTime() < 24 * (60 * 60 * 1000)) {
+                    res.status(200).json({success: false, msg: "Ticket may not be cancelled within 24 hours before departure."});
+                } else {
+                    await connection.promise().query(
+                        'DELETE FROM customer_ticket WHERE ticket_id = ?',
+                        ticket.data.ticket_id);
+                    await connection.promise().query(
+                        'DELETE FROM ticket WHERE id = ?',
+                        ticket.data.ticket_id);
+                    await connection.promise().query(
+                        // SET FOREIGN_KEY_CHECKS=0;
+                        // SET FOREIGN_KEY_CHECKS=1;
+                        'UPDATE flight SET capacity = capacity + 1 WHERE airline = ? AND flight_num = ? AND dep_datetime = ?',
+                        [ticketResult[0].airline_name, ticketResult[0].flight_num, ticketResult[0].dep_datetime]);
+
+                    res.status(200).json({success: true, msg: ''});
+                }
+            }
+        }).catch((err) => {
+            logger.error(err);
+            res.status(500).json({success: false, msg: 'Cancel Flight Error'});
+        });
+    }
+});
+
 // eslint-disable-next-line require-await
 router.post('/rate_flight', authCustomer, async (req, res) => {
     const Rate = z.object({
@@ -40,7 +87,7 @@ router.post('/rate_flight', authCustomer, async (req, res) => {
             const result = JSON.parse(JSON.stringify(rows));
 
             if (result.length === 0) {
-                res.status(200).json({success: false, msg: "You cannot rate this flight because the flight hasn't yet arrived or you do not own this ticket."});
+                res.status(200).json({success: false, msg: "You cannot rate a future ticket or that you do not own"});
             } else {
                 const [rows] = await connection.promise().query(
                     'SELECT customer_email, ticket_id FROM rate WHERE customer_email = ? AND ticket_id = ?',
