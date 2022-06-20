@@ -18,7 +18,6 @@ router.get('/flights', authCustomer, async (req, res) => {
     res.status(200).send({success: true, data: await customerFlights(email), msg: ''});
 });
 
-// TODO: test this route
 // eslint-disable-next-line require-await
 router.post('/cancel_flight', authCustomer, async (req, res) => {
     const Ticket = z.object({
@@ -29,7 +28,7 @@ router.post('/cancel_flight', authCustomer, async (req, res) => {
     const email = req.user as string;
 
     if (!ticket.success) {
-        res.status(200).json({success: false, msg: 'User input format is incorrect.'});
+        res.status(400).json({success: false, msg: 'User input format is incorrect.'});
     } else {
         lock.acquire(`customerCancelTicket`, async () => {
             const [rows] = await connection.promise().query(
@@ -50,8 +49,6 @@ router.post('/cancel_flight', authCustomer, async (req, res) => {
                         'DELETE FROM ticket WHERE id = ?',
                         ticket.data.ticket_id);
                     await connection.promise().query(
-                        // SET FOREIGN_KEY_CHECKS=0;
-                        // SET FOREIGN_KEY_CHECKS=1;
                         'UPDATE flight SET capacity = capacity + 1 WHERE airline = ? AND flight_num = ? AND dep_datetime = ?',
                         [ticketResult[0].airline_name, ticketResult[0].flight_num, ticketResult[0].dep_datetime]);
 
@@ -78,7 +75,7 @@ router.post('/rate_flight', authCustomer, async (req, res) => {
     const rate = Rate.safeParse(req.body);
 
     if (!rate.success) {
-        res.status(200).json({success: false, msg: 'User input format is incorrect.'});
+        res.status(400).json({success: false, msg: 'User input format is incorrect.'});
     } else {
         lock.acquire(`customerRateTicket${rate.data.ticket_id}`, async () => {
             const [rows] = await connection.promise().query(
@@ -142,7 +139,7 @@ router.get('/spending/:start?/:end?', authCustomer, async (req, res) => {
         res.status(200).send({success: true, data, msg: ''});
 
     } catch (e) {
-        res.status(200).send({success: false, msg: 'Date format is incorrect.'});
+        res.status(400).send({success: false, msg: 'Date format is incorrect.'});
     }
 });
 

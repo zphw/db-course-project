@@ -21,7 +21,7 @@ router.post('/customer/login', async (req, res) => {
     const user = Customer.safeParse(req.body);
 
     if (!user.success) {
-        res.status(200).json({success: false, msg: 'User input format is incorrect.'});
+        res.status(400).json({success: false, msg: 'User input format is incorrect.'});
     } else {
         const [rows] = await connection.promise().query(
             'SELECT password FROM customer WHERE email = ?',
@@ -61,7 +61,7 @@ router.post('/customer/register', async (req, res) => {
     const user = NewCustomer.safeParse(req.body);
 
     if (!user.success) {
-        res.status(200).json({success: false, msg: 'User input format is incorrect.'});
+        res.status(400).json({success: false, msg: 'User input format is incorrect.'});
     } else {
         lock.acquire('customerReg', async () => {
             const [rows] = await connection.promise().query(

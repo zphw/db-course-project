@@ -16,7 +16,7 @@ router.post('/search', async (req, res) => {
     const search = Flight.safeParse(req.body);
 
     if (!search.success) {
-        res.status(200).json({success: false, msg: 'Malformed search format.'});
+        res.status(400).json({success: false, msg: 'Malformed search format.'});
     } else {
         const data: {flights: [], back_flights?: []} = {flights: []};
 
@@ -39,7 +39,7 @@ router.post('/flight', async (req, res) => {
     const flight = Flight.safeParse(req.body);
 
     if (!flight.success) {
-        res.status(200).json({success: false, msg: 'Malformed search format.'});
+        res.status(400).json({success: false, msg: 'Malformed search format.'});
     } else {
         res.status(200).json({success: true, data: await findFlight(
                 flight.data.airline,
