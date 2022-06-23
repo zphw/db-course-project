@@ -7,7 +7,7 @@ import { z } from 'zod';
 import connection from '../database';
 import env from '../utils/env';
 import logger from '../utils/logger';
-import { toDateString } from "../utils/zod";
+import {escape, toDateString} from "../utils/zod";
 
 const router = Router();
 
@@ -47,15 +47,15 @@ router.post('/customer/login', async (req, res) => {
 router.post('/customer/register', async (req, res) => {
     const NewCustomer = z.object({
         email: z.string().email().max(50),
-        name: z.string().max(50),
+        name: z.preprocess(escape, z.string().max(50)),
         password: z.string().max(72),
-        address: z.string().max(50).optional().nullable().default(null),
-        address_2: z.string().max(50).optional().nullable().default(null),
-        city: z.string().max(30).optional().nullable().default(null),
-        state: z.string().length(2).optional().nullable().default(null),
-        passport_num: z.string().max(20).optional().nullable().default(null),
+        address: z.preprocess(escape, z.string().max(50).optional().nullable().default(null)),
+        address_2: z.preprocess(escape, z.string().max(50).optional().nullable().default(null)),
+        city: z.preprocess(escape, z.string().max(30).optional().nullable().default(null)),
+        state: z.preprocess(escape, z.string().length(2).optional().nullable().default(null)),
+        passport_num: z.preprocess(escape, z.string().max(20).optional().nullable().default(null)),
         passport_exp: z.preprocess(toDateString, z.string().optional().nullable().default(null)),
-        passport_country: z.string().max(20).optional().nullable().default(null),
+        passport_country: z.preprocess(escape, z.string().max(20).optional().nullable().default(null)),
         birthday: z.preprocess(toDateString, z.string().optional().nullable().default(null)),
     });
     const user = NewCustomer.safeParse(req.body);
