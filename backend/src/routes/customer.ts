@@ -61,7 +61,7 @@ router.post('/purchase_flight', authCustomer, async (req, res) => {
                     const cardResult = JSON.parse(JSON.stringify(rows));
                     if (cardResult[0].count > 0) {
                         await connection.promise().query(
-                            'UPDATE payment SET type = ? WHERE ?',
+                            'UPDATE payment SET ? WHERE ?',
                             [purchase.data.payment, {card_number: purchase.data.payment.card_number}]);
                     } else {
                         await connection.promise().query(
