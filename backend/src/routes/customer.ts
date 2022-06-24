@@ -5,7 +5,7 @@ import connection from '../database';
 import logger from "../utils/logger";
 import { authCustomer } from '../middleware/auth';
 import { customerFlights, spendingTotal, spendingInterval } from '../database/queries/customer';
-import { escape } from "../utils/zod";
+import { escape, toDateString } from "../utils/zod";
 import { z } from "zod";
 
 
@@ -16,6 +16,88 @@ const lock = new AsyncLock();
 router.get('/flights', authCustomer, async (req, res) => {
     const email = req.user as string;
     res.status(200).send({success: true, data: await customerFlights(email), msg: ''});
+});
+
+// eslint-disable-next-line require-await
+router.post('/purchase_flight', authCustomer, async (req, res) => {
+    const Purchase = z.object({
+        airline_name: z.string(),
+        flight_num: z.number().int(),
+        dep_datetime: z.string(),
+        payment: z.object({
+            card_number: z.preprocess((v) => parseInt(v as string).toString(), z.string()),
+            type: z.enum(["credit", "debit"]),
+            cardholder_name: z.preprocess(escape, z.string().max(30)),
+            card_exp: z.preprocess(toDateString, z.string()),
+        })
+    });
+
+    const purchase = Purchase.safeParse(req.body);
+    const email = req.user as string;
+
+    if (!purchase.success) {
+        res.status(400).json({success: false, msg: 'User input format is incorrect.'});
+    } else {
+        if (new Date(purchase.data.dep_datetime).getTime() < new Date().getTime()) {
+            res.status(200).json({success: false, msg: 'You cannot buy flight that already departed.'});
+        } else {
+            lock.acquire(`customerPurchaseTicket`, async () => {
+                const [rows1] = await connection.promise().query(
+                    'SELECT COUNT(*) as count FROM ticket WHERE airline_name = ? AND flight_num = ? AND dep_datetime = ?',
+                    [purchase.data.airline_name, purchase.data.flight_num, purchase.data.dep_datetime]);
+                const boughtCount = JSON.parse(JSON.stringify(rows1));
+
+                const [rows] = await connection.promise().query(
+                    'SELECT base_price, capacity FROM flight WHERE airline = ? AND flight_num = ? AND dep_datetime = ? AND capacity > ?',
+                    [purchase.data.airline_name, purchase.data.flight_num, purchase.data.dep_datetime, boughtCount[0].count]);
+                const ticketResult = JSON.parse(JSON.stringify(rows));
+
+                if (ticketResult.length === 0) {
+                    res.status(200).json({success: false, msg: "You cannot purchase this flight, either because it does not exist or it's full."});
+                } else {
+                    const [rows] = await connection.promise().query(
+                        'SELECT COUNT(*) as count FROM payment WHERE card_number = ?',
+                    [purchase.data.payment.card_number]);
+                    const cardResult = JSON.parse(JSON.stringify(rows));
+                    if (cardResult[0].count > 0) {
+                        await connection.promise().query(
+                            'UPDATE payment SET type = ? WHERE ?',
+                            [purchase.data.payment, {card_number: purchase.data.payment.card_number}]);
+                    } else {
+                        await connection.promise().query(
+                            'INSERT INTO payment SET ?',
+                            purchase.data.payment);
+                    }
+
+                    const sold_price = boughtCount[0].count / ticketResult[0].capacity <= 0.6 ? ticketResult[0].base_price : ticketResult[0].base_price * 1.2;
+                    const [insert] = await connection.promise().query(
+                        'INSERT INTO ticket SET ?',
+                        {
+                            email,
+                            airline_name: purchase.data.airline_name,
+                            flight_num: purchase.data.flight_num,
+                            dep_datetime: purchase.data.dep_datetime,
+                            sold_price,
+                            purchase_datetime: new Date()
+                        });
+                    const result = JSON.parse(JSON.stringify(insert));
+
+                    await connection.promise().query(
+                        'INSERT INTO customer_ticket SET ?',
+                        {
+                            email,
+                            ticket_id: result.insertId,
+                            payment_method: purchase.data.payment.card_number
+                        });
+
+                    res.status(200).json({success: true, msg: ''});
+                }
+            }).catch((err) => {
+                logger.error(err);
+                res.status(500).json({success: false, msg: 'Book Flight Error'});
+            });
+        }
+    }
 });
 
 // eslint-disable-next-line require-await
@@ -48,9 +130,6 @@ router.post('/cancel_flight', authCustomer, async (req, res) => {
                     await connection.promise().query(
                         'DELETE FROM ticket WHERE id = ?',
                         ticket.data.ticket_id);
-                    await connection.promise().query(
-                        'UPDATE flight SET capacity = capacity + 1 WHERE airline = ? AND flight_num = ? AND dep_datetime = ?',
-                        [ticketResult[0].airline_name, ticketResult[0].flight_num, ticketResult[0].dep_datetime]);
 
                     res.status(200).json({success: true, msg: ''});
                 }

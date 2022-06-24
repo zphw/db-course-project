@@ -7,7 +7,7 @@ import { z } from 'zod';
 import connection from '../database';
 import env from '../utils/env';
 import logger from '../utils/logger';
-import {escape, toDateString} from "../utils/zod";
+import { escape, toDateString } from "../utils/zod";
 
 const router = Router();
 
