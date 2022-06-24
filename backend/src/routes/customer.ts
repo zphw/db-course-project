@@ -69,7 +69,7 @@ router.post('/purchase_flight', authCustomer, async (req, res) => {
                             purchase.data.payment);
                     }
 
-                    const sold_price = boughtCount[0].count / ticketResult[0].capacity <= 0.6 ? ticketResult[0].base_price : ticketResult[0].base_price * 1.2;
+                    const sold_price = boughtCount[0].count / ticketResult[0].capacity < 0.6 ? ticketResult[0].base_price : ticketResult[0].base_price * 1.2;
                     const [insert] = await connection.promise().query(
                         'INSERT INTO ticket SET ?',
                         {
