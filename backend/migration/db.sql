@@ -19,9 +19,9 @@
 -- Current Database: `cs3083`
 --
 
---- CREATE DATABASE /*!32312 IF NOT EXISTS*/ `cs3083` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `cs3083` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;
 
---- USE `cs3083`;
+USE `cs3083`;
 
 --
 -- Table structure for table `airline`
@@ -215,7 +215,7 @@ CREATE TABLE `customer_ticket` (
 
 LOCK TABLES `customer_ticket` WRITE;
 /*!40000 ALTER TABLE `customer_ticket` DISABLE KEYS */;
-INSERT INTO `customer_ticket` VALUES ('cl4770@nyu.edu',1,'4895920309347321'),('cl4770@nyu.edu',2,'4895920309347321');
+INSERT INTO `customer_ticket` VALUES ('cl4770@nyu.edu',1,'4895920309347321'),('cl4770@nyu.edu',2,'4895920309347321'),('cl4770@nyu.edu',4,'1234123412341235'),('cl4770@nyu.edu',6,'1234123412341234');
 /*!40000 ALTER TABLE `customer_ticket` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -256,7 +256,7 @@ CREATE TABLE `flight` (
 
 LOCK TABLES `flight` WRITE;
 /*!40000 ALTER TABLE `flight` DISABLE KEYS */;
-INSERT INTO `flight` VALUES ('Jet Blue',1401,'2022-06-17 17:00:00','2022-06-17 20:24:00',100.00,143,'on-time','JFK','FLL',1,'Jet Blue'),('Jet Blue',1623,'2022-06-14 20:15:00','2022-06-14 23:37:00',180.00,143,'delayed','JFK','LAX',1,'Jet Blue'),('Jet Blue',2202,'2022-06-17 17:56:00','2022-06-17 20:58:00',100.00,143,'on-time','FLL','JFK',1,'Jet Blue');
+INSERT INTO `flight` VALUES ('Jet Blue',123,'2023-06-01 23:09:53','2023-06-02 23:09:53',200.00,3,'on-time','JFK','LAX',1,'Jet Blue'),('Jet Blue',1401,'2022-06-19 19:22:58','2022-06-17 20:24:00',100.00,144,'on-time','JFK','FLL',1,'Jet Blue'),('Jet Blue',1623,'2022-06-30 23:35:51','2022-06-14 23:37:00',180.00,143,'delayed','JFK','LAX',1,'Jet Blue'),('Jet Blue',2202,'2022-06-17 17:56:00','2022-06-17 20:58:00',100.00,143,'on-time','FLL','JFK',1,'Jet Blue');
 /*!40000 ALTER TABLE `flight` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -282,7 +282,7 @@ CREATE TABLE `payment` (
 
 LOCK TABLES `payment` WRITE;
 /*!40000 ALTER TABLE `payment` DISABLE KEYS */;
-INSERT INTO `payment` VALUES ('4895920309347321','credit','kaitlyn liu','2022-06-16');
+INSERT INTO `payment` VALUES ('1234123412341234','credit','yesmy name','2029-01-01'),('1234123412341235','credit','my name','2029-01-01'),('4895920309347321','credit','kaitlyn liu','2022-06-16');
 /*!40000 ALTER TABLE `payment` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -297,7 +297,7 @@ CREATE TABLE `rate` (
   `customer_email` varchar(50) NOT NULL,
   `ticket_id` int(11) NOT NULL,
   `stars` tinyint(4) NOT NULL,
-  `comment` varchar(250) NOT NULL,
+  `comment` varchar(250) DEFAULT NULL,
   PRIMARY KEY (`customer_email`,`ticket_id`),
   KEY `rate_ticket` (`ticket_id`),
   CONSTRAINT `rate_customer` FOREIGN KEY (`customer_email`) REFERENCES `customer` (`email`),
@@ -355,8 +355,8 @@ CREATE TABLE `ticket` (
   `purchase_datetime` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`id`),
   KEY `ticket_flight` (`airline_name`,`flight_num`,`dep_datetime`),
-  CONSTRAINT `ticket_flight` FOREIGN KEY (`airline_name`, `flight_num`, `dep_datetime`) REFERENCES `flight` (`airline`, `flight_num`, `dep_datetime`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+  CONSTRAINT `ticket_flight` FOREIGN KEY (`airline_name`, `flight_num`, `dep_datetime`) REFERENCES `flight` (`airline`, `flight_num`, `dep_datetime`) ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -365,7 +365,7 @@ CREATE TABLE `ticket` (
 
 LOCK TABLES `ticket` WRITE;
 /*!40000 ALTER TABLE `ticket` DISABLE KEYS */;
-INSERT INTO `ticket` VALUES (1,'cl4770@nyu.edu','Jet Blue',1401,'2022-06-17 17:00:00',100.00,'2022-06-14 20:11:31'),(2,'cl4770@nyu.edu','Jet Blue',1401,'2022-06-17 17:00:00',150.00,'2022-06-15 20:13:52');
+INSERT INTO `ticket` VALUES (1,'cl4770@nyu.edu','Jet Blue',1401,'2022-06-17 17:00:00',100.00,'2022-06-14 20:11:31'),(2,'cl4770@nyu.edu','Jet Blue',1401,'2022-06-17 17:00:00',150.00,'2022-06-15 20:13:52'),(3,'cl4770@nyu.edu','Jet Blue',123,'2023-06-01 23:09:53',200.00,'2022-06-23 23:31:27'),(4,'cl4770@nyu.edu','Jet Blue',123,'2023-06-01 23:09:53',200.00,'2022-06-23 23:32:34'),(6,'cl4770@nyu.edu','Jet Blue',123,'2023-06-01 23:09:53',240.00,'2022-06-23 23:51:17');
 /*!40000 ALTER TABLE `ticket` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -378,4 +378,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-06-15  2:03:53
+-- Dump completed on 2022-07-01  0:43:06
