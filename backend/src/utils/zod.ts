@@ -8,6 +8,14 @@ export const toDateString = (v: unknown) => {
     }
 };
 
+export const toDate = (v: unknown) => {
+    try {
+        return v ? new Date(v as string) : undefined;
+    } catch (e) {
+        return -1;
+    }
+};
+
 export const escape = (v: unknown) => {
     return v ? xss(v as string) : undefined;
 };

@@ -95,6 +95,36 @@ router.post('/customer/register', async (req, res) => {
     }
 });
 
+router.post('/staff/login', async (req, res) => {
+    const Staff = z.object({
+        username: z.string(),
+        password: z.string(),
+    });
+    const staff = Staff.safeParse(req.body);
+
+    if (!staff.success) {
+        res.status(400).json({success: false, msg: 'User input format is incorrect.'});
+    } else {
+        const [rows] = await connection.promise().query(
+            'SELECT password, affiliation FROM airline_staff WHERE username = ?',
+            [staff.data.username]);
+        const result = JSON.parse(JSON.stringify(rows));
+
+        if (result.length > 0 && bcrypt.compareSync(req.body.password, result[0].password)) {
+            res.cookie('token', sign({ user: staff.data.username, role: 'staff', airline: result[0].affiliation }, env.JWT_SECRET, {
+                expiresIn: '1h',
+            }), {
+                httpOnly: true,
+                // expires: new Date().setMonth(new Date().getMonth() + 6)
+                // secure: true
+            });
+            res.status(200).json({success: true, msg: ''});
+        } else {
+            res.status(200).json({success: false, msg: 'Username or password incorrect.'});
+        }
+    }
+});
+
 router.get('/logout', (req, res) => {
     res.clearCookie('token').status(200).json({success:true, msg:''});
 });
