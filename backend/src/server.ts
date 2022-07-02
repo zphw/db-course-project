@@ -1,5 +1,4 @@
 import http from 'http';
-
 import app from './app';
 import env from './utils/env';
 import logger from './utils/logger';
