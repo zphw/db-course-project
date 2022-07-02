@@ -7,8 +7,8 @@ import { authStaff } from '../middleware/auth';
 import { escape, toDate, toDateString } from "../utils/zod";
 import { z } from "zod";
 import {
-    allAirplanes,
-    customersOnlyTakeACertainFuknAirline, flightCustomers,
+    allAirplanes, allAirports,
+    customersOnlyTakeACertainAirline, flightCustomers,
     flightRatings,
     flights,
     frequentCustomers, revenueTotal, ticketsSoldInterval, ticketsSoldTotal
@@ -119,6 +119,7 @@ router.post('/change_flight_status', authStaff, async (req, res) => {
 // eslint-disable-next-line require-await
 router.post('/add_airplane', authStaff, async (req, res) => {
     const NewAirplane = z.object({
+        id: z.number().int(),
         seats_num: z.number().int(),
         manufacture_company: z.preprocess(escape, z.string().max(20)),
         manufacture_date: z.preprocess(toDateString, z.string()),
@@ -157,10 +158,19 @@ router.post('/add_airport', authStaff, async (req, res) => {
         res.status(400).json({success: false, msg: 'User input format is incorrect.'});
     } else {
         lock.acquire('addAirport', async () => {
-            await connection.promise().query(
-                'INSERT INTO airport SET ?',
-                airport.data);
-            res.status(200).json({success: true, msg: ''});
+            const [rows] = await connection.promise().query(
+                'SELECT * FROM airport WHERE code = ?',
+                [airport.data.code]);
+            const result = JSON.parse(JSON.stringify(rows));
+
+            if (result.length !== 0) {
+                res.status(200).json({success: false, msg: 'Airport code already exists.'});
+            } else {
+                await connection.promise().query(
+                    'INSERT INTO airport SET ?',
+                    airport.data);
+                res.status(200).json({success: true, msg: ''});
+            }
         }).catch((err) => {
             logger.error(err);
             res.status(500).json({success: false, msg: 'Adding Airport Error'});
@@ -184,7 +194,7 @@ router.post('/flight_ratings', authStaff, async (req, res) => {
 router.get('/frequent_customers', authStaff, async (req, res) => {
     res.status(200).json({success: true, data: {
             frequent_customers: await frequentCustomers(req.airline as string),
-            only_customers: await customersOnlyTakeACertainFuknAirline(req.airline as string),
+            only_customers: await customersOnlyTakeACertainAirline(req.airline as string),
         }});
 });
 
@@ -215,6 +225,10 @@ router.get('/revenue/:start/:end', authStaff, async (req, res) => {
     } catch (e) {
         res.status(400).send({success: false, msg: 'Date format is incorrect.'});
     }
+});
+
+router.get('/airports', authStaff, async (req, res) => {
+    res.status(200).json({success: true, data: {amount: await allAirports()}});
 });
 
 router.get('/airplanes', authStaff, async (req, res) => {

@@ -1,6 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
+import cors from 'cors';
 
 import indexRouter from './routes/index';
 import authRouter from './routes/auth';
@@ -10,7 +10,8 @@ import staffRouter from './routes/staff';
 
 const app = express();
 
-app.use(helmet());
+app.use(cors());
+
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
