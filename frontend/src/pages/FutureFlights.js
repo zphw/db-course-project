@@ -43,12 +43,15 @@ export default function FutureFlights() {
                     e.preventDefault();
                     axios
                     .post(
-                    'http://localhost:3000/search/',
+                    'http://localhost:3000/search',
                     {
                         dep: dep,
                         arr: arr,
                         date: date,
-                    }
+                    }, {headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    }}
                     )
                     .then((res) => {
                     console.log(res.data);
@@ -56,7 +59,7 @@ export default function FutureFlights() {
                     setRefresh(refresh + 1);
                     })
                     .catch((error) => {
-                    console.log('http://localhost:3000/search/');
+                    console.log('http://localhost:3000/search');
                     console.log(error);
                     });
                 }}
