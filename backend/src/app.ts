@@ -7,14 +7,13 @@ import authRouter from './routes/auth';
 import customerRouter from './routes/customer';
 import staffRouter from './routes/staff';
 
+
 const app = express();
 
 app.use(cors());
-app.options("*", (req, res) => {
-    res.status(200).send("Preflight request allowed");
-});
-app.use(cookieParser());
 
+
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
